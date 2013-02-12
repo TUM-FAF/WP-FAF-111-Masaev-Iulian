@@ -1,1 +1,1 @@
-some text, just for training in working with git
+here should be description of my work over lab work
