@@ -1,4 +1,5 @@
 #include<windows.h>
+#define WM_GETMINMAXINFO 0x0024
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -8,6 +9,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
     HWND     hwnd;
     MSG      msg;
     WNDCLASS wndclass;
+
 
     wndclass.style = CS_HREDRAW | CS_VREDRAW ;
     wndclass.lpfnWndProc = WndProc;
@@ -38,22 +40,44 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-     HDC         hdc ;
-     PAINTSTRUCT ps ;
-     RECT        rect ;
-     switch (message)
-     {
-     case WM_PAINT:
-          hdc = BeginPaint (hwnd, &ps) ;
-          GetClientRect (hwnd, &rect) ;
-         DrawText (hdc, TEXT ("Done with Pride and Prejudice by Mashaev Iulian"), -1, &rect,
-                    DT_SINGLELINE | DT_CENTER | DT_VCENTER ) ;
-          EndPaint (hwnd, &ps) ;
-          return 0 ;
+    HDC         hdc ;
+    PAINTSTRUCT ps ;
+    RECT        rect ;
+    switch (message)
+    {
+    case WM_PAINT:
+        hdc = BeginPaint (hwnd, &ps) ;
+        GetClientRect (hwnd, &rect) ;
+        DrawText (hdc, TEXT ("Done with Pride and Prejudice by Mashaev Iulian"), -1, &rect,
+                  DT_SINGLELINE | DT_CENTER | DT_VCENTER ) ;
+        EndPaint (hwnd, &ps) ;
+        return 0 ;
 
-     case WM_DESTROY:
-          PostQuitMessage (0) ;
-          return 0 ;
-     }
-     return DefWindowProc (hwnd, message, wParam, lParam) ;
+    case WM_DESTROY:
+        PostQuitMessage (0) ;
+        return 0 ;
+    case WM_GETMINMAXINFO:
+    {
+        LPMINMAXINFO pInfo = (LPMINMAXINFO)lParam;
+        POINT point;
+        point.x=332;
+        point.y=64;
+        pInfo->ptMinTrackSize=point;
+        return 0;
+    }
+    case WM_RBUTTONDOWN:
+        MessageBox (NULL, TEXT ("You pressed right mouse button"), TEXT ("Notitification"), 1) ;
+        return 0;
+    case WM_CLOSE:
+        MessageBox (NULL, TEXT ("Sure?"), TEXT ("Exit"), 0) ;
+        PostQuitMessage (0) ;
+        return 0;
+    case WM_MOVING:
+
+     return DefWindowProc (hwnd, WM_CLOSE, wParam, lParam) ;
+
+        return 0 ;
+
+    }
+    return DefWindowProc (hwnd, message, wParam, lParam) ;
 }
