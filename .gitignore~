@@ -26,8 +26,3 @@
 # CodeBlocks artefacts
 *.depend
 *.layout
-
-# Documents, books, reports
-*.odt
-*.docx
-*.pdf
