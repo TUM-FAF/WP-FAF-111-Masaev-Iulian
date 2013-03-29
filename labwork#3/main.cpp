@@ -69,6 +69,58 @@ POINT find_near(POINT* apt1,POINT* apt2,POINT point)
     }
     return pt;
 }
+POINT* Beziergongen(int w,int h)
+{
+    POINT* bzg;
+    int i,off1,off2;
+    off1=w/15;
+    off2=h/20;
+    bzg=(POINT*)malloc(15*sizeof(POINT));
+    bzg[0].x=w/2;
+    bzg[0].y=3*h/7;
+    bzg[1].x=bzg[0].x-off1;
+    bzg[1].y=bzg[0].y;
+    bzg[3].x=w/4;
+    bzg[3].y=h/2;
+    bzg[2].x=bzg[3].x+off2;
+    bzg[2].y=bzg[3].y-off1;
+    bzg[4].x=bzg[3].x-off2;
+    bzg[4].y=bzg[3].y+off1;
+    bzg[6].x=5*w/12;
+    bzg[6].y=3*h/4;
+    bzg[5].x=bzg[6].x-off1;
+    bzg[5].y=bzg[6].y-off2;
+    bzg[7].x=bzg[6].x+off1;
+    bzg[7].y=bzg[6].y+off2;
+    for(i=8; i<15; i++)
+    {
+        bzg[i].x=w-bzg[15-i].x;
+        bzg[i].y=bzg[15-i].y;
+    }
+    return bzg;
+}
+void Beziergon(HDC hdc,POINT* bzg)
+{
+    HPEN hpen;
+    POINT *apt;
+    int i,j;
+    apt=(POINT*)malloc(4*sizeof(POINT));
+    for(i=0; i<5; i++)
+    {
+        for(j=0; j<4; j++)
+        {
+            if((i+j)==15)
+            {
+                apt[j]=bzg[0];
+            }
+            else
+            {
+                apt[j]=bzg[3*i+j];
+            }
+        }
+    }
+
+}
 POINT* OwnBezier(POINT* pt,int width)
 {
     POINT *bzr;
@@ -77,13 +129,14 @@ POINT* OwnBezier(POINT* pt,int width)
     POINT *pm;
     pm=(POINT*)malloc(4*sizeof(POINT));
     bzr=(POINT*)malloc(size*sizeof(POINT));
-    for(i=0;i<4;i++)
+    for(i=0; i<4; i++)
     {
-        pm[i].x=pt[i].x+width/2; pm[i].y=pt[i].y;
+        pm[i].x=pt[i].x+width/2;
+        pm[i].y=pt[i].y;
     }
     bzr[0]=pm[0];
     bzr[199]=pm[3];
-    for(i=1;i<200;i++)
+    for(i=1; i<200; i++)
     {
         t=t+0.005;
         mt=1-t;
@@ -92,6 +145,7 @@ POINT* OwnBezier(POINT* pt,int width)
         bzr[i].x=(int)xcoord;
         bzr[i].y=(int)ycoord;
     }
+
     return bzr;
 }
 
@@ -99,11 +153,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HDC             hdc;
     PAINTSTRUCT     ps;
-    static POINT    *bzr,pt[4],bzg[15],point; //for own bezier, built in bezier, and beizergon with 5 points
+    static POINT    *bzr,pt[4],*bzg,point,*apt; //for own bezier, built in bezier, and beizergon with 5 points
     static int      cxClient, cyClient;
     RECT            rect;
     HPEN            hwide,hvar,hbez;
-    int i;
+    int             i,j;
     switch (message)
     {
     case WM_CREATE:
@@ -121,6 +175,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         pt[3].x = cxClient/3;
         pt[3].y = cyClient/8;
         bzr=OwnBezier(pt,cxClient);
+        bzg=Beziergongen(cxClient,cyClient);
         return 0;
     case WM_PAINT:
         InvalidateRect (hwnd, NULL, TRUE);
@@ -138,11 +193,35 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         hbez=CreatePen(PS_SOLID,2,RGB(87,91,18));
         SelectObject(hdc,hbez);
         Polyline(hdc,bzr,size); //draw bezier curve using own function(for computing set of points)
+        //Beziergon(hdc,bzg);
+        apt=(POINT*)malloc(4*sizeof(POINT));
+        for(i=0; i<5; i++)
+        {
+            for(j=0; j<4; j++)
+            {
+                if((3*i+j)==15)
+                {
+                    apt[j]=bzg[0];
+                }
+                else
+                {
+                    apt[j]=bzg[3*i+j];
+                }
+            }
+            hvar=CreatePen(PS_SOLID,4,RGB(100*i,255-34*i,11*i));
+            SelectObject(hdc,hvar);
+            PolyBezier(hdc,apt,4);
+            DeleteObject(hvar);
+        }
         DeleteObject(hwide);
         DeleteObject(hbez);
         EndPaint(hwnd,&ps);
         return 0 ;
 
+    case WM_LBUTTONDOWN:
+        point.x=LOWORD(lParam);
+        point.y=HIWORD(lParam);
+        find_near(pt,bzg,point);
     case WM_DESTROY:
 
         PostQuitMessage (0) ;
